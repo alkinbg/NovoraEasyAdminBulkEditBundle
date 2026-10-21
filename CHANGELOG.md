@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.1 — Security and configuration hardening
 
 - Fail fast on mismatched form definitions and field-handler allowlists.
 - Regression coverage for access denial between review and final confirmation.
