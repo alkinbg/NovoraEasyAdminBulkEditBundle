@@ -38,6 +38,7 @@ final class NovoraEasyAdminBulkEditExtension extends Extension
                 new Reference(BulkEditFormFactory::class),
                 new Reference(BulkEditExecutor::class),
                 new Reference('twig'),
+                new Reference('translator'),
             ]);
     }
 }

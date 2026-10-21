@@ -23,6 +23,8 @@ final class IntegrationKernelTest extends TestCase
         try {
             $container = $kernel->getContainer()->get('test.service_container');
             self::assertTrue($container->has('test.workflow'));
+            self::assertSame('Масово редактиране', $container->get('translator')->trans('page.edit', [], 'NovoraEasyAdminBulkEdit', 'bg'));
+            self::assertSame('Bulk edit', $container->get('translator')->trans('page.edit', [], 'NovoraEasyAdminBulkEdit', 'en'));
             self::assertTrue($container->get('twig')->getLoader()->exists('@NovoraEasyAdminBulkEdit/bulk_edit.html.twig'));
             $routes = $container->get('router')->getRouteCollection();
             self::assertNotNull($routes->get('admin_integration_bulk_edit'));
@@ -71,7 +73,7 @@ final class IntegrationKernelTest extends TestCase
             $preview = $kernel->handle($previewRequest);
             self::assertSame(200, $preview->getStatusCode());
             $html = (string) $preview->getContent();
-            self::assertStringContainsString('1 selected record(s)', $html);
+            self::assertStringContainsString('1 selected records', $html);
             self::assertSame(1, preg_match('/name="form\[_token\]"[^>]*value="([^"]+)"/', $html, $matches));
             $formToken = html_entity_decode($matches[1], ENT_QUOTES);
 
@@ -115,7 +117,7 @@ final class IntegrationKernelTest extends TestCase
             $reviewResponse = $kernel->handle($reviewGet);
             self::assertSame(200, $reviewResponse->getStatusCode());
             $reviewHtml = (string) $reviewResponse->getContent();
-            self::assertStringContainsString('Review the values that will be applied', $reviewHtml);
+            self::assertStringContainsString('These values will be applied', $reviewHtml);
             self::assertSame(1, preg_match('/name="bulk_confirm\[_token\]"[^>]*value="([^"]+)"/', $reviewHtml, $reviewMatches));
             $reviewFormToken = html_entity_decode($reviewMatches[1], ENT_QUOTES);
 

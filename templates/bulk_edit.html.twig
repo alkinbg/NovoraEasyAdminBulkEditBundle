@@ -1,16 +1,33 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
-{% block content_title %}Bulk edit{% endblock %}
+{% trans_default_domain 'NovoraEasyAdminBulkEdit' %}
+{% block content_title %}{{ 'page.edit'|trans }}{% endblock %}
 {% block main %}
-    <p>{{ selected_count }} selected record(s). Only checked fields will be updated. No records are changed until you confirm the review.</p>
+    <div class="mb-4">
+        <div class="fw-semibold">{{ 'selection.count'|trans({'%count%': selected_count}) }}</div>
+        <p class="text-muted mb-0">{{ 'selection.description'|trans }}</p>
+    </div>
     {{ form_start(form) }}
         {{ form_errors(form) }}
-        {% for field in field_names %}
-            <div class="mb-3 border rounded p-3">
-                {{ form_row(attribute(form, 'apply_' ~ field)) }}
-                {{ form_row(attribute(form, 'value_' ~ field)) }}
-            </div>
-        {% endfor %}
-        <button class="btn btn-primary" type="submit">Review changes</button>
-        <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Cancel</a>
+        <div class="d-flex flex-column gap-3 mb-4">
+            {% for field in field_names %}
+                {% set apply = attribute(form, 'apply_' ~ field) %}
+                {% set value = attribute(form, 'value_' ~ field) %}
+                <section class="card shadow-none" aria-label="{{ value.vars.label|default(field) }}">
+                    <div class="card-body">
+                        <div class="fw-semibold mb-2">{{ value.vars.label|default(field) }}</div>
+                        {{ form_row(apply) }}
+                        <div class="ps-3 border-start ms-2 mt-2">
+                            <div class="text-muted small mb-1">{{ 'field.value'|trans }}</div>
+                            {{ form_widget(value) }}
+                            {{ form_errors(value) }}
+                        </div>
+                    </div>
+                </section>
+            {% endfor %}
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-primary" type="submit">{{ 'button.review'|trans }}</button>
+            <a class="btn btn-outline-secondary" href="{{ cancel_url }}">{{ 'button.cancel'|trans }}</a>
+        </div>
     {{ form_end(form) }}
 {% endblock %}

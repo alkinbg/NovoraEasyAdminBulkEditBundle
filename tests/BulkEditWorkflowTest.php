@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Symfony\Component\Security\Csrf\CsrfTokenManager;
 use Twig\Environment;
+use Symfony\Component\Translation\Translator;
 use Twig\Extension\AbstractExtension;
 use Twig\Loader\FilesystemLoader;
 use Twig\TwigFunction;
@@ -53,7 +54,7 @@ final class BulkEditWorkflowTest extends TestCase
         $twig->addFunction(new TwigFunction('form_start', static fn (): string => '', ['is_safe' => ['html']]));
         $twig->addFunction(new TwigFunction('form_widget', static fn (): string => '', ['is_safe' => ['html']]));
         $twig->addFunction(new TwigFunction('form_end', static fn (): string => '', ['is_safe' => ['html']]));
-        $workflow = new BulkEditWorkflow(new BulkSelection($csrf), new BulkEditSelectionStore($stack), new BulkEditFormFactory(Forms::createFormFactoryBuilder()->addExtension(new HttpFoundationExtension())->getFormFactory()), new BulkEditExecutor($manager), $twig);
+        $workflow = new BulkEditWorkflow(new BulkSelection($csrf), new BulkEditSelectionStore($stack), new BulkEditFormFactory(Forms::createFormFactoryBuilder()->addExtension(new HttpFoundationExtension())->getFormFactory()), new BulkEditExecutor($manager), $twig, new Translator('en'));
         return [$workflow, $manager, $csrf, $stack, $session];
     }
 

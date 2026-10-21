@@ -69,6 +69,12 @@ $fields = [
 
 The bundle deliberately does not guess setters or permit all entity fields. The caller must specify the entity class from the trusted EasyAdmin context, define the allowed form fields and field handlers, check permissions for the action **and every selected row**, and configure application-specific validation.
 
+## Interface and translations
+
+The form and review screens use native EasyAdmin/Bootstrap layout and include English and Bulgarian translations (`NovoraEasyAdminBulkEdit` domain). The application locale determines the language. Use the `label` option in each allowed field definition for a meaningful human-readable field label. The first checkbox chooses whether a property changes; the value control sets the new value, including a valid `false` for boolean fields.
+
+EasyAdmin 5 shows its own generic confirmation modal for batch actions by default. To disable it, EasyAdmin provides `$crud->askConfirmationOnBatchActions(false)` in `configureCrud()`. **This affects every batch action in that CRUD controller**. Only use it if all configured batch actions implement adequate confirmation themselves. This bundle does not disable other actions' confirmations automatically.
+
 ## Scope and safety
 
 - Only simple scalar values (`string`, `int`, `float`, `bool`, `null`) are supported by the server-side review screen in this version. Complex Doctrine associations, custom object-valued fields and large asynchronous batches are deliberately outside the scope.

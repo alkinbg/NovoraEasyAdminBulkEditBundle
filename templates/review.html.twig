@@ -1,17 +1,29 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
-{% block content_title %}Review bulk update{% endblock %}
+{% trans_default_domain 'NovoraEasyAdminBulkEdit' %}
+{% block content_title %}{{ 'page.review'|trans }}{% endblock %}
 {% block main %}
-    <p>Review the values that will be applied to {{ selected_count }} selected record(s). <strong>No changes have been saved yet.</strong></p>
-    <dl class="row">
-        {% for field, value in changes %}
-            <dt class="col-sm-3">{{ field }}</dt>
-            <dd class="col-sm-9">{{ value is same as(null) ? 'null' : (value is same as(true) ? 'true' : (value is same as(false) ? 'false' : value)) }}</dd>
-        {% endfor %}
-    </dl>
+    <p class="text-muted mb-3">{{ 'selection.review_description'|trans({'%count%': selected_count}) }}</p>
+    <div class="card shadow-none mb-4">
+        <div class="card-body">
+            <dl class="row mb-0">
+                {% for field, value in changes %}
+                    <dt class="col-sm-4 py-2">{{ field_labels[field]|default('') ?: field }}</dt>
+                    <dd class="col-sm-8 py-2">
+                        {% if value is same as(true) %}{{ 'value.yes'|trans }}
+                        {% elseif value is same as(false) %}{{ 'value.no'|trans }}
+                        {% elseif value is same as(null) %}{{ 'value.empty'|trans }}
+                        {% else %}{{ value }}{% endif %}
+                    </dd>
+                {% endfor %}
+            </dl>
+        </div>
+    </div>
     {{ form_start(confirmation) }}
         {{ form_errors(confirmation) }}
-        <button class="btn btn-primary" type="submit">Apply changes to {{ selected_count }} record(s)</button>
-        <a class="btn btn-outline-secondary" href="{{ edit_url }}">Back to editing</a>
-        <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Cancel</a>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-primary" type="submit">{{ 'button.confirm'|trans({'%count%': selected_count}) }}</button>
+            <a class="btn btn-outline-secondary" href="{{ edit_url }}">{{ 'button.back'|trans }}</a>
+            <a class="btn btn-outline-secondary" href="{{ cancel_url }}">{{ 'button.cancel'|trans }}</a>
+        </div>
     {{ form_end(confirmation) }}
 {% endblock %}

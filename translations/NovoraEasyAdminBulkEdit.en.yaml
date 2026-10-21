@@ -1,0 +1,21 @@
+page:
+  edit: 'Bulk edit'
+  review: 'Review changes'
+selection:
+  count: '%count% selected records'
+  description: 'Choose the fields to change. No records will be updated until final confirmation.'
+  review_description: 'These values will be applied to %count% selected records. No changes have been saved yet.'
+field:
+  apply: 'Change this field'
+  value: 'New value'
+button:
+  review: 'Review changes'
+  confirm: 'Apply changes to %count% records'
+  back: 'Back to editing'
+  cancel: 'Cancel'
+value:
+  yes: 'Yes'
+  no: 'No'
+  empty: 'Empty'
+validation:
+  no_fields: 'Choose at least one field to update.'
