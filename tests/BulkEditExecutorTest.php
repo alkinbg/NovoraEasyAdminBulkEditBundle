@@ -30,6 +30,7 @@ final class BulkEditExecutorTest extends TestCase
     private function manager(): EntityManager
     {
         $config = ORMSetup::createAttributeMetadataConfiguration([__DIR__], true);
+        $config->enableNativeLazyObjects(true);
         $manager = new EntityManager(DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]), $config);
         (new SchemaTool($manager))->createSchema([$manager->getClassMetadata(Item::class)]);
         foreach ([1, 2] as $_) {
