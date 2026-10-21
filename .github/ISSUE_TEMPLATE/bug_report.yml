@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a reproducible defect (do not disclose security vulnerabilities here)
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: 'For security issues, read SECURITY.md and report privately. Never share secrets or production records.'
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Include the expected and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Provide steps, relevant code, and a minimal test where possible. Remove sensitive information.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Bundle, PHP, Symfony, EasyAdmin and Doctrine versions
+      placeholder: 'Bundle 1.0.0; PHP 8.4; Symfony 8.x; EasyAdmin 5.x; Doctrine ORM 3.x'
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or additional context (sanitized)
+    validations:
+      required: false
