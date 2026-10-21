@@ -27,7 +27,7 @@ final readonly class BulkEditWorkflow
         private BulkEditFormFactory $forms,
         private BulkEditExecutor $executor,
         private Environment $twig,
-        private TranslatorInterface $translator,
+        private ?TranslatorInterface $translator = null,
     ) {
     }
 
@@ -116,7 +116,7 @@ final readonly class BulkEditWorkflow
             try {
                 $changes = $this->forms->selectedChanges($form, array_keys($definitions));
             } catch (BulkEditException $exception) {
-                $form->addError(new FormError($this->translator->trans('validation.no_fields', [], 'NovoraEasyAdminBulkEdit')));
+                $form->addError(new FormError(($this->translator?->trans('validation.no_fields', [], 'NovoraEasyAdminBulkEdit') ?? $exception->getMessage())));
                 $changes = [];
             }
             if ($changes !== []) {
