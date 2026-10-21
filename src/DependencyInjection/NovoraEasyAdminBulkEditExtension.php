@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Novora\EasyAdminBulkEditBundle\DependencyInjection;
 
 use Novora\EasyAdminBulkEditBundle\BulkEditExecutor;
+use Novora\EasyAdminBulkEditBundle\BulkEditFormFactory;
 use Novora\EasyAdminBulkEditBundle\BulkEditSelectionStore;
 use Novora\EasyAdminBulkEditBundle\BulkSelection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -25,5 +26,8 @@ final class NovoraEasyAdminBulkEditExtension extends Extension
         $container->register(BulkEditSelectionStore::class, BulkEditSelectionStore::class)
             ->setPublic(false)
             ->setArgument(0, new Reference('request_stack'));
+        $container->register(BulkEditFormFactory::class, BulkEditFormFactory::class)
+            ->setPublic(false)
+            ->setArgument(0, new Reference('form.factory'));
     }
 }
