@@ -1,0 +1,41 @@
+# Novora EasyAdmin Bulk Edit Bundle
+
+A Symfony library for explicit, transactional bulk editing of Doctrine entities selected in EasyAdmin 5.
+
+> **Development status:** Core executor and batch-selection validation are implemented. This is not yet a complete EasyAdmin bulk-edit workflow or a stable 1.0 release. Do not publish or deploy this branch as a finished product.
+
+## Requirements
+
+PHP 8.4+, Symfony 7.4/8, EasyAdmin 5, Doctrine ORM 3.
+
+## Core API
+
+`BulkEditExecutor::execute()` receives an entity class, selected IDs, an explicit whitelist of field handlers, values that have already passed Symfony Form validation, and a mandatory per-entity authorization callback. It fetches and authorizes **all selected rows before changing any**, then changes managed entities using the supplied handlers, flushes, and commits in a single database transaction. Exceptions cause a rollback.
+
+```php
+use Novora\EasyAdminBulkEditBundle\BulkEditField;
+
+$count = $executor->execute(
+    Product::class,
+    [15, 16],
+    [
+        'status' => new BulkEditField('status', static function (Product $product, string $value): void {
+            $product->setStatus($value);
+        }),
+    ],
+    ['status' => 'published'], // Prevalidated by your Symfony form.
+    fn (Product $product): bool => $authorizationChecker->isGranted('EDIT', $product),
+);
+```
+
+**Security obligations for integrations:** Check the current CRUD context's entity class, validate EasyAdmin's batch-action CSRF token, authorize the batch action, and authorize every entity. Never derive field handlers or entity classes directly from user input. Setters are application-specific and values must be validated in Symfony Form before executing. The executor does not lock rows against concurrent changes, enforce optimistic concurrency or perform field validation by itself. A bulk-edit UI and complete EasyAdmin controller integration are not included yet.
+
+## Development
+
+```bash
+composer install
+vendor/bin/phpunit
+vendor/bin/phpstan analyse src --level=8
+```
+
+MIT license. Copyright (c) 2026 Alkin Fehim.

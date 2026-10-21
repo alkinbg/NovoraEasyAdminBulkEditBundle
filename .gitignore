@@ -1,0 +1,5 @@
+/vendor/
+/.phpunit.cache/
+/.phpunit-watcher.yml
+/composer.lock
+/.phpunit.result.cache
