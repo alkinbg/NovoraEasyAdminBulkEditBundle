@@ -1,0 +1,15 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+{% block content_title %}Bulk edit{% endblock %}
+{% block main %}
+    <p>{{ selected_count }} selected record(s). Only checked fields will be updated.</p>
+    {{ form_start(form) }}
+        {{ form_errors(form) }}
+        {% for field in field_names %}
+            <div class="mb-3 border rounded p-3">
+                {{ form_row(attribute(form, 'apply_' ~ field)) }}
+                {{ form_row(attribute(form, 'value_' ~ field)) }}
+            </div>
+        {% endfor %}
+        <button class="btn btn-primary" type="submit">Confirm bulk update</button>
+    {{ form_end(form) }}
+{% endblock %}

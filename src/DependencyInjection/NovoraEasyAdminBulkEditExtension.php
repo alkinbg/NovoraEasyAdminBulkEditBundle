@@ -11,6 +11,7 @@ use Novora\EasyAdminBulkEditBundle\BulkSelection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
+use Novora\EasyAdminBulkEditBundle\Workflow\BulkEditWorkflow;
 
 final class NovoraEasyAdminBulkEditExtension extends Extension
 {
@@ -29,5 +30,14 @@ final class NovoraEasyAdminBulkEditExtension extends Extension
         $container->register(BulkEditFormFactory::class, BulkEditFormFactory::class)
             ->setPublic(false)
             ->setArgument(0, new Reference('form.factory'));
+        $container->register(BulkEditWorkflow::class, BulkEditWorkflow::class)
+            ->setPublic(false)
+            ->setArguments([
+                new Reference(BulkSelection::class),
+                new Reference(BulkEditSelectionStore::class),
+                new Reference(BulkEditFormFactory::class),
+                new Reference(BulkEditExecutor::class),
+                new Reference('twig'),
+            ]);
     }
 }
