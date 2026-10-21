@@ -20,15 +20,38 @@ Explicit, validated bulk editing for EasyAdmin 5 and Doctrine ORM. Administrator
 - A single database transaction with ORM lifecycle callbacks; rollback on failure
 - Tests for the real Symfony/EasyAdmin HTTP workflow, form validation, invalid tokens and replay attempts
 
-## Installation
+## Installation in an existing Symfony application
 
-After the package is indexed by Packagist:
+Use **`composer require` in your Symfony application directory**, not `composer install` in the application to add a new dependency:
 
 ```bash
 composer require novora/easyadmin-bulk-edit-bundle:^1.0
 ```
 
-Until Packagist registration, add this public GitHub repository as a Composer VCS repository first. Symfony Flex should enable the bundle automatically; in applications without Flex, register `Novora\\EasyAdminBulkEditBundle\\NovoraEasyAdminBulkEditBundle` in `config/bundles.php`. EasyAdmin's own Twig and routing bundle dependencies must also be enabled.
+The package is published on [Packagist](https://packagist.org/packages/novora/easyadmin-bulk-edit-bundle), and version `v1.0.1` was independently resolved and downloaded in a clean Composer smoke test. You do **not** need to configure a GitHub VCS repository.
+
+With Symfony Flex, the bundle is automatically registered in `config/bundles.php`. Verify the entry exists:
+
+```php
+Novora\EasyAdminBulkEditBundle\NovoraEasyAdminBulkEditBundle::class => ['all' => true],
+```
+
+Without Flex, add that entry manually. Ensure your application has a configured EasyAdmin dashboard, Doctrine entity manager, Symfony sessions and CSRF enabled. Installing the Composer dependency **does not automatically add a bulk-edit action to every CRUD controller**: explicitly integrate it using the example below.
+
+### `composer require` vs `composer install`
+
+- `composer require novora/easyadmin-bulk-edit-bundle:^1.0` **adds** the bundle to an existing application's `composer.json` and resolves its dependencies.
+- `composer install` **installs existing locked dependencies** of a project. Run it after cloning an application or this bundle's source repository for development; it does not add the package to an unrelated application.
+- In the **bundle repository itself**, run `composer install` only to set up the contributor/test environment; it is not how users install the bundle into their projects.
+
+Verification from an existing working Symfony application:
+
+```bash
+composer show novora/easyadmin-bulk-edit-bundle
+php bin/console about
+```
+
+The second command requires your application to have its normal Symfony Runtime, autoload and configuration in place. Installing this bundle alone is not a replacement for creating a Symfony application.
 
 ## EasyAdmin integration
 
