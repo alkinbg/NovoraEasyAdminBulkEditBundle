@@ -11,8 +11,11 @@ use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Bundle\SecurityBundle\SecurityBundle;
+use Symfony\UX\TwigComponent\TwigComponentBundle;
+use Twig\Extra\TwigExtraBundle\TwigExtraBundle;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Kernel;
+use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 final class IntegrationKernel extends Kernel
 {
@@ -23,6 +26,8 @@ final class IntegrationKernel extends Kernel
         yield new FrameworkBundle();
         yield new SecurityBundle();
         yield new TwigBundle();
+        yield new TwigComponentBundle();
+        yield new TwigExtraBundle();
         yield new DoctrineBundle();
         yield new EasyAdminBundle();
         yield new NovoraEasyAdminBulkEditBundle();
@@ -35,11 +40,18 @@ final class IntegrationKernel extends Kernel
 
     public function getCacheDir(): string
     {
-        return sys_get_temp_dir().'/novora_easyadmin_bundle_test_cache';
+        return sys_get_temp_dir().'/novora_easyadmin_bundle_test_cache_'.md5($this->getProjectDir());
+    }
+
+    private function configureRoutes(RoutingConfigurator $routes): void
+    {
+        $routes->import('.', 'easyadmin.routes');
     }
 
     protected function configureContainer(ContainerConfigurator $container): void
     {
+        $container->services()->set(IntegrationDashboardController::class)->autowire()->autoconfigure()->public();
+        $container->services()->set(IntegrationCrudController::class)->autowire()->autoconfigure()->public();
         $container->services()->alias('test.workflow', \Novora\EasyAdminBulkEditBundle\Workflow\BulkEditWorkflow::class)->public();
         $container->extension('framework', [
             'secret' => 'testing-only-secret',
@@ -48,10 +60,16 @@ final class IntegrationKernel extends Kernel
             'session' => ['storage_factory_id' => 'session.storage.factory.mock_file'],
         ]);
         $container->extension('security', ['firewalls' => ['main' => ['lazy' => true, 'logout' => ['path' => '/logout']]]]);
+        $container->extension('twig_component', ['anonymous_template_directory' => 'components']);
         $container->extension('twig', ['default_path' => $this->getProjectDir().'/tests/templates']);
         $container->extension('doctrine', [
             'dbal' => ['url' => 'sqlite:///:memory:'],
-            'orm' => ['auto_mapping' => false],
+            'orm' => ['auto_mapping' => false, 'mappings' => ['TestFixtures' => [
+                'type' => 'attribute',
+                'dir' => __DIR__,
+                'prefix' => 'Novora\\EasyAdminBulkEditBundle\\Tests\\Fixtures',
+                'is_bundle' => false,
+            ]]],
         ]);
     }
 }

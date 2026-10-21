@@ -83,7 +83,23 @@ final class BulkEditWorkflowTest extends TestCase
         $result = $workflow->confirm($post, WorkflowItem::class, $definitions, $fields, $authorize, '/done');
         self::assertSame(303, $result->getStatusCode());
         $manager->clear();
+        self::assertSame('draft', $manager->find(WorkflowItem::class, 1)?->status);
+        $stack->pop();
+        $reviewUrl = $result->getTargetUrl();
+        $reviewRequest = Request::create($reviewUrl);
+        $reviewRequest->setSession($session);
+        $stack->push($reviewRequest);
+        $review = $workflow->confirm($reviewRequest, WorkflowItem::class, $definitions, $fields, $authorize, '/done');
+        self::assertSame(200, $review->getStatusCode());
+        self::assertStringContainsString('Review: 1', (string) $review->getContent());
+        $stack->pop();
+        $confirmRequest = Request::create($reviewUrl, 'POST', ['bulk_confirm' => []]);
+        $confirmRequest->setSession($session);
+        $stack->push($confirmRequest);
+        $result = $workflow->confirm($confirmRequest, WorkflowItem::class, $definitions, $fields, $authorize, '/done');
+        self::assertSame(303, $result->getStatusCode());
+        $manager->clear();
         self::assertSame('published', $manager->find(WorkflowItem::class, 1)?->status);
-        self::assertSame(400, $workflow->confirm($post, WorkflowItem::class, $definitions, $fields, $authorize, '/done')->getStatusCode());
+        self::assertSame(400, $workflow->confirm($confirmRequest, WorkflowItem::class, $definitions, $fields, $authorize, '/done')->getStatusCode());
     }
 }

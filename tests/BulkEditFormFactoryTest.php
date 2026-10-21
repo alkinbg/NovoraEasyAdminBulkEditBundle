@@ -29,4 +29,12 @@ final class BulkEditFormFactoryTest extends TestCase
         $this->expectException(BulkEditException::class);
         $factory->selectedChanges($form, ['status']);
     }
+    public function testReturningFromReviewKeepsCheckedValues(): void
+    {
+        $factory = new BulkEditFormFactory(Forms::createFormFactory());
+        $form = $factory->create(['status' => ['type' => TextType::class]], ['status' => 'published']);
+        self::assertTrue($form->get('apply_status')->getData());
+        self::assertSame('published', $form->get('value_status')->getData());
+    }
+
 }

@@ -54,4 +54,31 @@ final class BulkEditSelectionStoreTest extends TestCase
         $this->expectException(BulkEditException::class);
         $this->store()->create(\stdClass::class, [1, '1']);
     }
+    public function testReviewIsStoredUntilSelectionIsConsumed(): void
+    {
+        $store = $this->store();
+        $token = $store->create(\stdClass::class, [1]);
+        $this->expectException(BulkEditException::class);
+        $store->review($token, \stdClass::class);
+    }
+
+    public function testSavedReviewIsAccessibleAndExpiresWithToken(): void
+    {
+        $store = $this->store();
+        $token = $store->create(\stdClass::class, [1]);
+        $store->saveReview($token, \stdClass::class, ['status' => 'published', 'price' => 10, 'enabled' => false]);
+        self::assertSame(['status' => 'published', 'price' => 10, 'enabled' => false], $store->review($token, \stdClass::class));
+        $store->consume($token, \stdClass::class);
+        $this->expectException(BulkEditException::class);
+        $store->review($token, \stdClass::class);
+    }
+
+    public function testObjectValuedReviewIsRejected(): void
+    {
+        $store = $this->store();
+        $token = $store->create(\stdClass::class, [1]);
+        $this->expectException(BulkEditException::class);
+        $store->saveReview($token, \stdClass::class, ['status' => new \stdClass()]);
+    }
+
 }

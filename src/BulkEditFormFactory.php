@@ -18,9 +18,10 @@ final readonly class BulkEditFormFactory
 
     /**
      * @param array<string, array{type: class-string<FormTypeInterface>, options?: array<string, mixed>}> $definitions
+     * @param array<string, mixed> $initialChanges
      * @return FormInterface<mixed>
      */
-    public function create(array $definitions): FormInterface
+    public function create(array $definitions, array $initialChanges = []): FormInterface
     {
         if ($definitions === []) {
             throw new \InvalidArgumentException('At least one editable field must be configured.');
@@ -35,14 +36,25 @@ final readonly class BulkEditFormFactory
                 'required' => false,
                 'mapped' => false,
                 'label' => 'Change '.$name,
+                'data' => array_key_exists($name, $initialChanges),
             ]);
-            $builder->add('value_'.$name, $definition['type'], array_replace([
+            $valueOptions = array_replace([
                 'required' => false,
                 'mapped' => false,
-            ], $definition['options'] ?? []));
+            ], $definition['options'] ?? []);
+            if (array_key_exists($name, $initialChanges)) {
+                $valueOptions['data'] = $initialChanges[$name];
+            }
+            $builder->add('value_'.$name, $definition['type'], $valueOptions);
         }
 
         return $builder->getForm();
+    }
+
+    /** @return FormInterface<mixed> */
+    public function createConfirmation(): FormInterface
+    {
+        return $this->formFactory->createNamed('bulk_confirm');
     }
 
     /**

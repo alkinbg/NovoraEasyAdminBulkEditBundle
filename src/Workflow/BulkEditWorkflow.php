@@ -35,10 +35,10 @@ final readonly class BulkEditWorkflow
      * @param BatchActionDto<T> $batch
      * @param class-string<T> $entityClass Read from the trusted AdminContext (not POST).
      */
-    public function start(BatchActionDto $batch, string $entityClass, string $confirmUrl): RedirectResponse
+    public function start(BatchActionDto $batch, string $entityClass, string $confirmUrl, string $expectedAction = 'bulkEdit'): RedirectResponse
     {
         try {
-            $ids = $this->selection->fromBatchAction($batch, $entityClass);
+            $ids = $this->selection->fromBatchAction($batch, $entityClass, $expectedAction);
         } catch (BulkEditException) {
             throw new \Symfony\Component\HttpKernel\Exception\BadRequestHttpException('Invalid batch selection.');
         }
@@ -71,7 +71,35 @@ final readonly class BulkEditWorkflow
         } catch (BulkEditException) {
             return new Response('Selection expired or is invalid.', Response::HTTP_BAD_REQUEST);
         }
-        $form = $this->forms->create($definitions);
+        if ($request->query->get('bulk_review') === '1') {
+            try {
+                $changes = $this->store->review($token, $entityClass);
+            } catch (BulkEditException) {
+                return new Response('No valid review was found.', Response::HTTP_BAD_REQUEST);
+            }
+            $confirmation = $this->forms->createConfirmation();
+            $confirmation->handleRequest($request);
+            if ($confirmation->isSubmitted() && $confirmation->isValid()) {
+                $this->store->consume($token, $entityClass);
+                $this->executor->execute($entityClass, $ids, $fields, $changes, $canEdit);
+                return new RedirectResponse($successUrl, Response::HTTP_SEE_OTHER);
+            }
+
+            return new Response($this->twig->render('@NovoraEasyAdminBulkEdit/review.html.twig', [
+                'confirmation' => $confirmation->createView(),
+                'selected_count' => count($ids),
+                'changes' => $changes,
+                'edit_url' => $request->getPathInfo().'?bulk_selection='.$token,
+                'cancel_url' => $successUrl,
+            ]));
+        }
+
+        try {
+            $initialChanges = $this->store->review($token, $entityClass);
+        } catch (BulkEditException) {
+            $initialChanges = [];
+        }
+        $form = $this->forms->create($definitions, $initialChanges);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             try {
@@ -81,10 +109,9 @@ final readonly class BulkEditWorkflow
                 $changes = [];
             }
             if ($changes !== []) {
-                // Token is consumed once; subsequent confirmation POSTs fail closed.
-                $this->store->consume($token, $entityClass);
-                $this->executor->execute($entityClass, $ids, $fields, $changes, $canEdit);
-                return new RedirectResponse($successUrl, Response::HTTP_SEE_OTHER);
+                $this->store->saveReview($token, $entityClass, $changes);
+                $uri = $request->getRequestUri();
+                return new RedirectResponse($uri.(str_contains($uri, '?') ? '&' : '?').'bulk_review=1', Response::HTTP_SEE_OTHER);
             }
         }
 
@@ -92,6 +119,7 @@ final readonly class BulkEditWorkflow
             'form' => $form->createView(),
             'selected_count' => count($ids),
             'field_names' => array_keys($definitions),
+            'cancel_url' => $successUrl,
         ]));
     }
 }

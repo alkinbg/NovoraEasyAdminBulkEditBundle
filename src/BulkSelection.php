@@ -20,12 +20,15 @@ final readonly class BulkSelection
      * @param class-string $expectedEntity
      * @return list<int|string>
      */
-    public function fromBatchAction(BatchActionDto $batch, string $expectedEntity): array
+    public function fromBatchAction(BatchActionDto $batch, string $expectedEntity, string $expectedAction = 'bulkEdit'): array
     {
+        if ($batch->getName() !== $expectedAction) {
+            throw new BulkEditException('Unexpected batch action.');
+        }
         if ($batch->getEntityFqcn() !== $expectedEntity) {
             throw new BulkEditException('Unexpected entity class.');
         }
-        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken('ea-batch-action-'.$batch->getName().'-'.$expectedEntity, $batch->getCsrfToken()))) {
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken('ea-batch-action-'.$expectedAction.'-'.$expectedEntity, $batch->getCsrfToken()))) {
             throw new BulkEditException('Invalid EasyAdmin batch action CSRF token.');
         }
         $ids = $batch->getEntityIds();

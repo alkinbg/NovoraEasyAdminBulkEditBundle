@@ -1,57 +1,70 @@
 # Novora EasyAdmin Bulk Edit Bundle
 
-A Symfony library for explicit, transactional bulk editing of Doctrine entities selected in EasyAdmin 5.
-
-> **Development status:** Core executor and batch-selection validation are implemented. This is not yet a complete EasyAdmin bulk-edit workflow or a stable 1.0 release. Do not publish or deploy this branch as a finished product.
+Explicit, validated bulk editing for EasyAdmin 5 and Doctrine ORM. Administrators select records from the normal EasyAdmin index, choose which allowed fields to change, review the exact proposed values, and explicitly confirm the operation.
 
 ## Requirements
 
-PHP 8.4+, Symfony 7.4/8, EasyAdmin 5, Doctrine ORM 3.
+- PHP 8.4 or newer (tested on PHP 8.4 and 8.5)
+- Symfony 7.4 or 8.x
+- EasyAdmin 5.x and Doctrine ORM 3.x
+- Configured Symfony session, Form CSRF protection, Doctrine entity manager and EasyAdmin routes
 
-## Core API
+## Features
 
-`BulkEditExecutor::execute()` receives an entity class, selected IDs, an explicit whitelist of field handlers, values that have already passed Symfony Form validation, and a mandatory per-entity authorization callback. It fetches and authorizes **all selected rows before changing any**, then changes managed entities using the supplied handlers, flushes, and commits in a single database transaction. Exceptions cause a rollback.
+- Native EasyAdmin batch-action integration without patching vendor code
+- **Only checked fields change**; server-defined field allowlist and Symfony Form validation
+- Separate review and final confirmation screens; review data remains server-side
+- Two separate CSRF checks (EasyAdmin batch action and Symfony confirmation form)
+- Time-limited, session-scoped selection tokens (15 minutes; maximum 100 IDs)
+- Explicit per-entity authorization callback and matching CRUD entity/action checks
+- A single database transaction with ORM lifecycle callbacks; rollback on failure
+- Tests for the real Symfony/EasyAdmin HTTP workflow, form validation, invalid tokens and replay attempts
 
-```php
-use Novora\EasyAdminBulkEditBundle\BulkEditField;
+## Installation
 
-$count = $executor->execute(
-    Product::class,
-    [15, 16],
-    [
-        'status' => new BulkEditField('status', static function (Product $product, string $value): void {
-            $product->setStatus($value);
-        }),
-    ],
-    ['status' => 'published'], // Prevalidated by your Symfony form.
-    fn (Product $product): bool => $authorizationChecker->isGranted('EDIT', $product),
-);
+After the package is indexed by Packagist:
+
+```bash
+composer require novora/easyadmin-bulk-edit-bundle:^1.0
 ```
 
-**Security obligations for integrations:** Check the current CRUD context's entity class, validate EasyAdmin's batch-action CSRF token, authorize the batch action, and authorize every entity. Never derive field handlers or entity classes directly from user input. Setters are application-specific and values must be validated in Symfony Form before executing. The executor does not lock rows against concurrent changes, enforce optimistic concurrency or perform field validation by itself. A bulk-edit UI and complete EasyAdmin controller integration are not included yet.
+Until Packagist registration, add this public GitHub repository as a Composer VCS repository first. Symfony Flex should enable the bundle automatically; in applications without Flex, register `Novora\\EasyAdminBulkEditBundle\\NovoraEasyAdminBulkEditBundle` in `config/bundles.php`. EasyAdmin's own Twig and routing bundle dependencies must also be enabled.
+
+## EasyAdmin integration
+
+See **[the complete CRUD integration example](docs/integration.md)** for the controller action configuration, `#[AdminRoute]` attributes, typed field handlers, authorization checks and a sample `ChoiceType` field.
+
+```php
+$fields = [
+    'status' => new BulkEditField('status',
+        static function (Product $product, string $status): void {
+            $product->setStatus($status);
+        }
+    ),
+];
+```
+
+The bundle deliberately does not guess setters or permit all entity fields. The caller must specify the entity class from the trusted EasyAdmin context, define the allowed form fields and field handlers, check permissions for the action **and every selected row**, and configure application-specific validation.
+
+## Scope and safety
+
+- Only simple scalar values (`string`, `int`, `float`, `bool`, `null`) are supported by the server-side review screen in this version. Complex Doctrine associations, custom object-valued fields and large asynchronous batches are deliberately outside the scope.
+- The executor uses the default Doctrine entity manager. Do not use it for entities mapped to a different entity manager without adapting the integration.
+- Doctrine lifecycle callbacks are honored because the executor updates managed entities, not DQL `UPDATE` statements.
+- The transaction rolls back on exceptions. A failed operation clears the EntityManager, detaching other managed objects in that request. External side effects from listeners or handlers **cannot** be rolled back by the database.
+- The bundle does not automatically lock rows or resolve concurrent changes. Applications that need lost-update protection should use Doctrine versioning or appropriate database locks.
+- A consumed selection cannot be retried using the same token after an exception. Session-backed single-use tokens are **not a guarantee of exactly-once execution across concurrent requests or multiple application nodes**. Review your session storage and application idempotency requirements.
+- The review screen displays requested field/value changes and the number of selected records; it is not an item-by-item before/after diff, an audit log or a dry-run of business side effects.
 
 ## Development
 
 ```bash
 composer install
+composer validate --strict
 vendor/bin/phpunit
-vendor/bin/phpstan analyse src --level=8
+vendor/bin/phpstan analyse src --level=8 --no-progress
 ```
 
-MIT license. Copyright (c) 2026 Alkin Fehim.
+CI runs PHPUnit and PHPStan on PHP 8.4 and PHP 8.5. The integration fixture boots a real Symfony container with EasyAdmin, Doctrine and Twig and tests the batch → form → review → confirmation HTTP sequence.
 
-## Two-request selection handoff
-
-`BulkEditSelectionStore` stores selected IDs in the server-side Symfony session and returns a random one-time token. Use it after validating the `BatchActionDto` through `BulkSelection`. On confirmation, call `consume($token, Product::class)` and then validate form values and authorization before invoking the executor. Tokens expire after 15 minutes and are consumed once; this prevents trusting entity IDs submitted in the confirmation form. **Note:** CSRF protection for the confirmation form is still required separately. This is an integration primitive, not a complete ready-made EasyAdmin form.
-
-### Transaction safety and session behavior
-
-The executor clears the Doctrine EntityManager after rolling back a failed transaction. This avoids continued use of dirty managed entities, **but it also detaches unrelated entities managed by that EntityManager**; call it within a dedicated request/operation. It does not automatically retry failed transactions, check concurrent writes, or use row-level locks. For systems requiring concurrency protection, implement application-specific optimistic locking or pessimistic locks and test the chosen database platform.
-
-`BulkEditSelectionStore::inspect()` reads the selection without consuming it. Use this when displaying the form or handling a validation failure. `consume()` is intended for an already validated, CSRF-protected confirmation. The application must handle retry behavior explicitly if persistence fails after consumption. Sessions must be configured and enabled.
-
-## EasyAdmin 5 usage
-
-The `Workflow\\BulkEditWorkflow` service provides batch selection handoff and a confirmation form that uses the bundled Twig template. See [the CRUD integration example](docs/integration.md) for wiring, field configuration and mandatory security checks. `BulkEditFormFactory` builds opt-in fields so omitted field checkboxes do not modify existing values.
-
-**Release policy:** Do not tag `v1.0.0` until a standalone Symfony + EasyAdmin fixture has exercised full controller routing, CSRF, authorization and request flows with PHP 8.4 and 8.5, and the CI matrix has passed.
+MIT License. Copyright (c) 2026 Alkin Fehim.

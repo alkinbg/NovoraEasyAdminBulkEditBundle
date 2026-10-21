@@ -31,4 +31,12 @@ final class BulkSelectionTest extends TestCase
         $this->expectException(BulkEditException::class);
         (new BulkSelection(new CsrfTokenManager()))->fromBatchAction(new BatchActionDto('bulkEdit', [1], \stdClass::class, 'no'), \stdClass::class);
     }
+    public function testRejectsAnotherValidBatchAction(): void
+    {
+        $manager = new CsrfTokenManager();
+        $token = $manager->getToken('ea-batch-action-batchDelete-stdClass')->getValue();
+        $this->expectException(BulkEditException::class);
+        (new BulkSelection($manager))->fromBatchAction(new BatchActionDto('batchDelete', [1], \stdClass::class, $token), \stdClass::class);
+    }
+
 }

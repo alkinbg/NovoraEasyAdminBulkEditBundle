@@ -80,4 +80,42 @@ final readonly class BulkEditSelectionStore
         $ids = $entry['ids'];
         return $ids;
     }
+    /**
+     * Save only prevalidated scalar changes in the server-side session.
+     * @param class-string $expectedEntityClass
+     * @param array<string, mixed> $changes
+     */
+    public function saveReview(string $token, string $expectedEntityClass, array $changes): void
+    {
+        $this->inspect($token, $expectedEntityClass);
+        if ($changes === []) {
+            throw new BulkEditException('No changes to review.');
+        }
+        foreach ($changes as $field => $value) {
+            if (!is_scalar($value) && $value !== null) {
+                throw new BulkEditException('Only scalar values are supported in review.');
+            }
+        }
+        $session = $this->requestStack->getSession();
+        $data = $session->get(self::KEY, []);
+        $data[$token]['changes'] = $changes;
+        $session->set(self::KEY, $data);
+    }
+
+    /**
+     * @param class-string $expectedEntityClass
+     * @return array<string, int|float|string|bool|null>
+     */
+    public function review(string $token, string $expectedEntityClass): array
+    {
+        $this->inspect($token, $expectedEntityClass);
+        $data = $this->requestStack->getSession()->get(self::KEY, []);
+        $changes = $data[$token]['changes'] ?? null;
+        if (!is_array($changes) || $changes === []) {
+            throw new BulkEditException('Review must be completed first.');
+        }
+        /** @var array<string, int|float|string|bool|null> $changes */
+        return $changes;
+    }
+
 }

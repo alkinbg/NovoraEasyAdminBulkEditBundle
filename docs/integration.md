@@ -10,13 +10,14 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\Product;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\BatchActionDto;
-use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Novora\EasyAdminBulkEditBundle\BulkEditField;
 use Novora\EasyAdminBulkEditBundle\Workflow\BulkEditWorkflow;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -38,11 +39,12 @@ final class ProductCrudController extends AbstractCrudController
         );
     }
 
+    #[AdminRoute('/bulk-edit', name: 'bulk_edit', options: ['methods' => ['POST']])]
     public function bulkEdit(
         AdminContext $context,
         BatchActionDto $batchActionDto,
         BulkEditWorkflow $workflow,
-        AdminUrlGeneratorInterface $urls,
+        AdminUrlGenerator $urls,
     ): Response {
         $this->denyAccessUnlessGranted('ROLE_PRODUCT_EDITOR');
 
@@ -53,11 +55,12 @@ final class ProductCrudController extends AbstractCrudController
         );
     }
 
+    #[AdminRoute('/bulk-edit-confirm', name: 'bulk_edit_confirm', options: ['methods' => ['GET', 'POST']])]
     public function bulkEditConfirm(
         Request $request,
         AdminContext $context,
         BulkEditWorkflow $workflow,
-        AdminUrlGeneratorInterface $urls,
+        AdminUrlGenerator $urls,
     ): Response {
         $this->denyAccessUnlessGranted('ROLE_PRODUCT_EDITOR');
 
@@ -76,7 +79,7 @@ final class ProductCrudController extends AbstractCrudController
                 }
             )],
             fn (Product $product): bool => $this->isGranted('EDIT', $product),
-            $urls->setController(self::class)->setAction(Action::INDEX)->generateUrl(),
+            $urls->setController(self::class)->setAction(Action::INDEX)->unset('bulk_selection')->generateUrl(),
         );
     }
 }
@@ -85,12 +88,12 @@ final class ProductCrudController extends AbstractCrudController
 ## Security requirements
 
 1. Do not trust an entity class, field name, selected IDs, or redirect destination from request parameters. Pass the entity class from `AdminContext` and use server-defined form configuration.
-2. Protect both controller methods with your authorization policy. The action role in this example is only a placeholder. `BulkEditExecutor` also requires explicit **per-entity** checks. If your EasyAdmin application uses separate action permissions or entity access policies, enforce them in these callbacks.
+2. Protect both controller methods with your authorization policy. `BulkSelection` additionally verifies the exact batch action name (`bulkEdit` by default). The action role in this example is only a placeholder. `BulkEditExecutor` also requires explicit **per-entity** checks. If your EasyAdmin application uses separate action permissions or entity access policies, enforce them in these callbacks.
 3. Symfony Form's CSRF integration must be enabled in your application. The provided form factory does not disable CSRF.
-4. The selection handoff uses an authenticated server-side Symfony session with a 15-minute lifetime. The token is one-time-use, including on a failed database transaction.
+4. The selection handoff uses a server-side Symfony session scoped to the current browser session with a 15-minute lifetime. The token is consumed on confirmation, including when a database operation fails; retrying then requires a new selection. Concurrent requests are not guaranteed to be exactly-once without additional application-level safeguards.
 5. The executor uses the default Doctrine entity manager. If your entity belongs to another manager, adapt the executor integration before using this package.
 6. This version intentionally supports simple scalar fields with explicit setters. Do not pass arbitrary client-provided field names or construct setter names dynamically.
 7. Configure field-specific validators in the form's `options`, and apply domain invariants in your entities or handlers.
 8. Database transaction rollback does not undo external side effects from setter code, listeners, mailers, or remote services. Keep these effects out of the transaction or use an outbox-style design.
 
-The confirmation page displays the fields and a count of selected records. It is **not** an entity-by-entity diff or an audit trail. The project does not currently claim full end-to-end validation against a separate Symfony application.
+The workflow has two steps: a form that selects fields and values, followed by a read-only review and separately CSRF-protected confirmation. The review is **not** an entity-by-entity diff or an audit trail. A bundled Symfony/EasyAdmin HTTP integration fixture tests both steps, but your own authorization policies, validators, database, and infrastructure require application-specific tests.
