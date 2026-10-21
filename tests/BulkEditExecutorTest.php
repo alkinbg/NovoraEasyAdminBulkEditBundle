@@ -74,4 +74,30 @@ final class BulkEditExecutorTest extends TestCase
         $this->expectException(BulkEditException::class);
         (new BulkEditExecutor($manager))->execute(Item::class, [1], [], ['unknown' => true], static fn (Item $item): bool => true);
     }
+    public function testSetterFailureRollsBackDatabase(): void
+    {
+        $manager = $this->manager();
+        $fields = ['status' => new BulkEditField('status', static function (Item $item, string $status): void {
+            $item->status = $status;
+            if ($item->id === 2) {
+                throw new \RuntimeException('Business rule failed.');
+            }
+        })];
+        try {
+            (new BulkEditExecutor($manager))->execute(Item::class, [1, 2], $fields, ['status' => 'published'], static fn (Item $item): bool => true);
+            self::fail('Expected setter failure.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame('Business rule failed.', $exception->getMessage());
+            $manager->clear();
+            self::assertSame('draft', $manager->find(Item::class, 1)?->status);
+            self::assertSame('draft', $manager->find(Item::class, 2)?->status);
+        }
+    }
+
+    public function testDuplicateIdsAreRejected(): void
+    {
+        $this->expectException(BulkEditException::class);
+        (new BulkEditExecutor($this->manager()))->execute(Item::class, [1, '1'], [], ['status' => 'published'], static fn (Item $item): bool => true);
+    }
+
 }

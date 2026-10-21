@@ -24,8 +24,13 @@ final readonly class BulkEditExecutor
      */
     public function execute(string $entityClass, array $identifiers, array $fields, array $changes, callable $canEdit): int
     {
-        if ($identifiers === [] || $changes === []) {
-            throw new BulkEditException('No selected entities or changes.');
+        if ($identifiers === [] || count($identifiers) > 100 || $changes === []) {
+            throw new BulkEditException('Select between 1 and 100 entities and at least one change.');
+        }
+        foreach ($identifiers as $id) {
+            if ((string) $id === '') {
+                throw new BulkEditException('Invalid entity identifier.');
+            }
         }
         if (count($identifiers) !== count(array_unique(array_map('strval', $identifiers)))) {
             throw new BulkEditException('Duplicate identifiers are not allowed.');
