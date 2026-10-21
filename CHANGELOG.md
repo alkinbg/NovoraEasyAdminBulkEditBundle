@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Fail fast on mismatched form definitions and field-handler allowlists.
+- Regression coverage for access denial between review and final confirmation.
+- Clarify concurrency, distributed idempotency and reauthorization responsibilities.
+
 ## 1.0.0 — Initial stable release
 
 - EasyAdmin 5 batch-action handoff with exact action, entity-class and CSRF validation.
