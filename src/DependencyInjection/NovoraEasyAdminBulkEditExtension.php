@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Novora\EasyAdminBulkEditBundle\DependencyInjection;
 
 use Novora\EasyAdminBulkEditBundle\BulkEditExecutor;
+use Novora\EasyAdminBulkEditBundle\BulkEditSelectionStore;
 use Novora\EasyAdminBulkEditBundle\BulkSelection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -21,5 +22,8 @@ final class NovoraEasyAdminBulkEditExtension extends Extension
         $container->register(BulkSelection::class, BulkSelection::class)
             ->setPublic(false)
             ->setArgument(0, new Reference('security.csrf.token_manager'));
+        $container->register(BulkEditSelectionStore::class, BulkEditSelectionStore::class)
+            ->setPublic(false)
+            ->setArgument(0, new Reference('request_stack'));
     }
 }

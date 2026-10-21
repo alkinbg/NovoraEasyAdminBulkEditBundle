@@ -39,3 +39,7 @@ vendor/bin/phpstan analyse src --level=8
 ```
 
 MIT license. Copyright (c) 2026 Alkin Fehim.
+
+## Two-request selection handoff
+
+`BulkEditSelectionStore` stores selected IDs in the server-side Symfony session and returns a random one-time token. Use it after validating the `BatchActionDto` through `BulkSelection`. On confirmation, call `consume($token, Product::class)` and then validate form values and authorization before invoking the executor. Tokens expire after 15 minutes and are consumed once; this prevents trusting entity IDs submitted in the confirmation form. **Note:** CSRF protection for the confirmation form is still required separately. This is an integration primitive, not a complete ready-made EasyAdmin form.
