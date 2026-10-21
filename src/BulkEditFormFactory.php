@@ -35,7 +35,8 @@ final readonly class BulkEditFormFactory
             $builder->add('apply_'.$name, CheckboxType::class, [
                 'required' => false,
                 'mapped' => false,
-                'label' => 'Change '.$name,
+                'label' => 'field.apply',
+                'translation_domain' => 'NovoraEasyAdminBulkEdit',
                 'data' => array_key_exists($name, $initialChanges),
             ]);
             $valueOptions = array_replace([

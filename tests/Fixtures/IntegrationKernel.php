@@ -40,7 +40,7 @@ final class IntegrationKernel extends Kernel
 
     public function getCacheDir(): string
     {
-        return sys_get_temp_dir().'/novora_easyadmin_bundle_test_cache_'.md5($this->getProjectDir());
+        return sys_get_temp_dir().'/novora_easyadmin_bundle_ux2_test_cache_'.md5($this->getProjectDir());
     }
 
     private function configureRoutes(RoutingConfigurator $routes): void
@@ -57,6 +57,7 @@ final class IntegrationKernel extends Kernel
             'secret' => 'testing-only-secret',
             'test' => true,
             'csrf_protection' => true,
+            'translator' => ['default_path' => $this->getProjectDir().'/translations', 'paths' => [$this->getProjectDir().'/translations']],
             'session' => ['storage_factory_id' => 'session.storage.factory.mock_file'],
         ]);
         $container->extension('security', ['firewalls' => ['main' => ['lazy' => true, 'logout' => ['path' => '/logout']]]]);

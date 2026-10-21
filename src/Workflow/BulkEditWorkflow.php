@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Form\FormError;
 use Twig\Environment;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Request orchestration independent from app-specific CRUD security rules. */
 final readonly class BulkEditWorkflow
@@ -26,6 +27,7 @@ final readonly class BulkEditWorkflow
         private BulkEditFormFactory $forms,
         private BulkEditExecutor $executor,
         private Environment $twig,
+        private ?TranslatorInterface $translator = null,
     ) {
     }
 
@@ -99,6 +101,7 @@ final readonly class BulkEditWorkflow
                 'changes' => $changes,
                 'edit_url' => $request->getPathInfo().'?bulk_selection='.$token,
                 'cancel_url' => $successUrl,
+                'field_labels' => array_map(static fn (array $definition): string => (string) ($definition['options']['label'] ?? ''), $definitions),
             ]));
         }
 
@@ -113,7 +116,7 @@ final readonly class BulkEditWorkflow
             try {
                 $changes = $this->forms->selectedChanges($form, array_keys($definitions));
             } catch (BulkEditException $exception) {
-                $form->addError(new FormError($exception->getMessage()));
+                $form->addError(new FormError(($this->translator?->trans('validation.no_fields', [], 'NovoraEasyAdminBulkEdit') ?? $exception->getMessage())));
                 $changes = [];
             }
             if ($changes !== []) {

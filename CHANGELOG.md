@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Improve the editing and review screen layout.
+- Introduce English and Bulgarian interface translations.
+- Clarify EasyAdmin's global batch-confirmation setting and the explicit opt-in control.
+
 ## 1.0.1 — Security and configuration hardening
 
 - Fail fast on mismatched form definitions and field-handler allowlists.
