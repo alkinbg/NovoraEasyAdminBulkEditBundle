@@ -32,6 +32,15 @@ final class BulkEditSelectionStoreTest extends TestCase
         $store->consume($token, \stdClass::class);
     }
 
+    public function testInspectDoesNotConsumeToken(): void
+    {
+        $store = $this->store();
+        $token = $store->create(\stdClass::class, [1]);
+        self::assertSame([1], $store->inspect($token, \stdClass::class));
+        self::assertSame([1], $store->inspect($token, \stdClass::class));
+        self::assertSame([1], $store->consume($token, \stdClass::class));
+    }
+
     public function testTokenCannotBeUsedForAnotherEntity(): void
     {
         $store = $this->store();

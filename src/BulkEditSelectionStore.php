@@ -51,15 +51,28 @@ final readonly class BulkEditSelectionStore
      */
     public function consume(string $token, string $expectedEntityClass): array
     {
+        $ids = $this->inspect($token, $expectedEntityClass);
+        $session = $this->requestStack->getSession();
+        $data = $session->get(self::KEY, []);
+        unset($data[$token]);
+        $session->set(self::KEY, $data);
+
+        return $ids;
+    }
+
+    /**
+     * Inspect a selection without consuming it; use for GET requests and invalid forms.
+     * @param class-string $expectedEntityClass
+     * @return list<int|string>
+     */
+    public function inspect(string $token, string $expectedEntityClass): array
+    {
         $session = $this->requestStack->getSession();
         $data = $session->get(self::KEY, []);
         if (!is_array($data)) {
             throw new BulkEditException('No valid selection was found.');
         }
         $entry = $data[$token] ?? null;
-        unset($data[$token]);
-        $session->set(self::KEY, $data);
-
         if (!is_array($entry) || ($entry['entity'] ?? null) !== $expectedEntityClass || !is_int($entry['created'] ?? null) || $entry['created'] < time() - 900 || !is_array($entry['ids'] ?? null)) {
             throw new BulkEditException('Selection expired or is invalid.');
         }

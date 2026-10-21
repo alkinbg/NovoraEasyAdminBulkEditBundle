@@ -100,4 +100,26 @@ final class BulkEditExecutorTest extends TestCase
         (new BulkEditExecutor($this->manager()))->execute(Item::class, [1, '1'], [], ['status' => 'published'], static fn (Item $item): bool => true);
     }
 
+    public function testFailedExecutionClearsManagedEntities(): void
+    {
+        $manager = $this->manager();
+        $item = $manager->find(Item::class, 1);
+        self::assertNotNull($item);
+        try {
+            (new BulkEditExecutor($manager))->execute(Item::class, [1, 2], [
+                'status' => new BulkEditField('status', static function (Item $entity, string $status): void {
+                    $entity->status = $status;
+                    if ($entity->id === 2) {
+                        throw new \RuntimeException('Failed');
+                    }
+                }),
+            ], ['status' => 'published'], static fn (Item $entity): bool => true);
+            self::fail('Expected failure');
+        } catch (\RuntimeException $exception) {
+            self::assertSame('Failed', $exception->getMessage());
+            self::assertFalse($manager->contains($item));
+            self::assertSame('draft', $manager->find(Item::class, 1)?->status);
+        }
+    }
+
 }

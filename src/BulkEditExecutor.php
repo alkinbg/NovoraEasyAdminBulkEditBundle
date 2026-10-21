@@ -66,6 +66,7 @@ final readonly class BulkEditExecutor
             return count($entities);
         } catch (\Throwable $exception) {
             $connection->rollBack();
+            $this->entityManager->clear();
             throw $exception;
         }
     }

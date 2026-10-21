@@ -43,3 +43,9 @@ MIT license. Copyright (c) 2026 Alkin Fehim.
 ## Two-request selection handoff
 
 `BulkEditSelectionStore` stores selected IDs in the server-side Symfony session and returns a random one-time token. Use it after validating the `BatchActionDto` through `BulkSelection`. On confirmation, call `consume($token, Product::class)` and then validate form values and authorization before invoking the executor. Tokens expire after 15 minutes and are consumed once; this prevents trusting entity IDs submitted in the confirmation form. **Note:** CSRF protection for the confirmation form is still required separately. This is an integration primitive, not a complete ready-made EasyAdmin form.
+
+### Transaction safety and session behavior
+
+The executor clears the Doctrine EntityManager after rolling back a failed transaction. This avoids continued use of dirty managed entities, **but it also detaches unrelated entities managed by that EntityManager**; call it within a dedicated request/operation. It does not automatically retry failed transactions, check concurrent writes, or use row-level locks. For systems requiring concurrency protection, implement application-specific optimistic locking or pessimistic locks and test the chosen database platform.
+
+`BulkEditSelectionStore::inspect()` reads the selection without consuming it. Use this when displaying the form or handling a validation failure. `consume()` is intended for an already validated, CSRF-protected confirmation. The application must handle retry behavior explicitly if persistence fails after consumption. Sessions must be configured and enabled.
