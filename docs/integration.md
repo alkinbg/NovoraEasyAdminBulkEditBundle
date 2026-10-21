@@ -97,3 +97,11 @@ final class ProductCrudController extends AbstractCrudController
 8. Database transaction rollback does not undo external side effects from setter code, listeners, mailers, or remote services. Keep these effects out of the transaction or use an outbox-style design.
 
 The workflow has two steps: a form that selects fields and values, followed by a read-only review and separately CSRF-protected confirmation. The review is **not** an entity-by-entity diff or an audit trail. A bundled Symfony/EasyAdmin HTTP integration fixture tests both steps, but your own authorization policies, validators, database, and infrastructure require application-specific tests.
+
+## Authorization and concurrent confirmation
+
+Re-check permissions on **both** CRUD routes, including the final confirmation request; a role may be revoked after preview. The `canEdit` callback is executed again for every entity when the database transaction runs. Do not cache an earlier authorization result or assume the review page grants permission to commit.
+
+Session-backed token consumption is intentionally **not** advertised as an atomic distributed exactly-once primitive. Default PHP session locking can serialize requests for the same session in some deployments, but it is not universal (custom Redis handlers, multi-node setups and configuration can change the behavior). For applications with financial, irreversible or externally visible effects, add a shared atomic lock or idempotency key backed by a database/lock service, and test your actual deployment. The bundle itself does not guarantee global exactly-once delivery.
+
+Entity-level changes may also race with other requests. Apply optimistic version checks or row locks where lost updates are unacceptable. ORM transactions alone are not sufficient protection from lost updates.

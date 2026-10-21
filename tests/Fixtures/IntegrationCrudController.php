@@ -19,6 +19,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class IntegrationCrudController extends AbstractCrudController
 {
+    public static bool $canAccessAction = true;
+    public static bool $canEditEntity = true;
     public static function getEntityFqcn(): string
     {
         return WorkflowItem::class;
@@ -32,18 +34,24 @@ final class IntegrationCrudController extends AbstractCrudController
     #[AdminRoute('/bulk-edit', name: 'bulk_edit', options: ['methods' => ['POST']])]
     public function bulkEdit(AdminContext $context, BatchActionDto $batchActionDto, BulkEditWorkflow $workflow, AdminUrlGenerator $urls): Response
     {
+        if (!self::$canAccessAction) {
+            throw new \Symfony\Component\Security\Core\Exception\AccessDeniedException();
+        }
         return $workflow->start($batchActionDto, $context->getEntity()->getFqcn(), $urls->setController(self::class)->setAction('bulkEditConfirm')->generateUrl());
     }
 
     #[AdminRoute('/bulk-edit-confirm', name: 'bulk_edit_confirm', options: ['methods' => ['GET', 'POST']])]
     public function bulkEditConfirm(Request $request, AdminContext $context, BulkEditWorkflow $workflow, AdminUrlGenerator $urls): Response
     {
+        if (!self::$canAccessAction) {
+            throw new \Symfony\Component\Security\Core\Exception\AccessDeniedException();
+        }
         return $workflow->confirm(
             $request,
             $context->getEntity()->getFqcn(),
             ['status' => ['type' => TextType::class]],
             ['status' => new BulkEditField('status', static function (WorkflowItem $item, string $status): void { $item->status = $status; })],
-            static fn (WorkflowItem $item): bool => true,
+            static fn (WorkflowItem $item): bool => self::$canEditEntity,
             $urls->setController(self::class)->setAction(Action::INDEX)->unset('bulk_selection')->generateUrl(),
         );
     }

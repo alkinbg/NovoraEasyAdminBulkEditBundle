@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Novora\EasyAdminBulkEditBundle\Tests;
 
 use Novora\EasyAdminBulkEditBundle\Tests\Fixtures\IntegrationKernel;
+use Novora\EasyAdminBulkEditBundle\Tests\Fixtures\IntegrationCrudController;
 use PHPUnit\Framework\TestCase;
 use Doctrine\ORM\Tools\SchemaTool;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
@@ -27,6 +28,8 @@ final class IntegrationKernelTest extends TestCase
             self::assertNotNull($routes->get('admin_integration_bulk_edit'));
             self::assertNotNull($routes->get('admin_integration_bulk_edit_confirm'));
         } finally {
+            IntegrationCrudController::$canAccessAction = true;
+            IntegrationCrudController::$canEditEntity = true;
             $kernel->shutdown();
             restore_exception_handler();
         }
@@ -128,6 +131,14 @@ final class IntegrationKernelTest extends TestCase
             $manager->clear();
             self::assertSame('draft', $manager->find(WorkflowItem::class, 1)?->status);
 
+            IntegrationCrudController::$canAccessAction = false;
+            $blocked = Request::create($reviewUrl, 'POST', ['bulk_confirm' => ['_token' => $reviewFormToken]]);
+            $blocked->setSession($session);
+            self::assertSame(401, $kernel->handle($blocked)->getStatusCode());
+            IntegrationCrudController::$canAccessAction = true;
+            $manager->clear();
+            self::assertSame('draft', $manager->find(WorkflowItem::class, 1)?->status);
+
             $confirm = Request::create($reviewUrl, 'POST', ['bulk_confirm' => ['_token' => $reviewFormToken]]);
             $confirm->setSession($session);
             $finalResponse = $kernel->handle($confirm);
@@ -155,6 +166,8 @@ final class IntegrationKernelTest extends TestCase
             self::assertSame(400, $kernel->handle($forgedBatchToken)->getStatusCode());
 
         } finally {
+            IntegrationCrudController::$canAccessAction = true;
+            IntegrationCrudController::$canEditEntity = true;
             $kernel->shutdown();
             restore_exception_handler();
         }
