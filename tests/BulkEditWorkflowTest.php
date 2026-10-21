@@ -102,4 +102,18 @@ final class BulkEditWorkflowTest extends TestCase
         self::assertSame('published', $manager->find(WorkflowItem::class, 1)?->status);
         self::assertSame(400, $workflow->confirm($confirmRequest, WorkflowItem::class, $definitions, $fields, $authorize, '/done')->getStatusCode());
     }
+    public function testMisconfiguredFieldHandlersAreRejected(): void
+    {
+        [$workflow] = $this->setupWorkflow();
+        $this->expectException(\LogicException::class);
+        $workflow->confirm(
+            Request::create('/confirm'),
+            WorkflowItem::class,
+            ['status' => ['type' => TextType::class]],
+            [],
+            static fn (WorkflowItem $item): bool => true,
+            '/done',
+        );
+    }
+
 }

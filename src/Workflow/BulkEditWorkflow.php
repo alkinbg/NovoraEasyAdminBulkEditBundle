@@ -62,6 +62,14 @@ final readonly class BulkEditWorkflow
         callable $canEdit,
         string $successUrl,
     ): Response {
+        $configuredFields = array_keys($definitions);
+        $handlerFields = array_keys($fields);
+        sort($configuredFields);
+        sort($handlerFields);
+        if ($configuredFields === [] || $configuredFields !== $handlerFields) {
+            throw new \LogicException('Bulk edit form definitions and field handlers must match exactly.');
+        }
+
         $token = $request->query->get('bulk_selection');
         if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/D', $token)) {
             return new Response('Invalid selection token.', Response::HTTP_BAD_REQUEST);
