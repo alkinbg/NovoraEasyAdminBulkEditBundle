@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — Improved editing experience and localization
 
 - Improve the editing and review screen layout.
 - Introduce English and Bulgarian interface translations.
