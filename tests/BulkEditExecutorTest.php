@@ -13,6 +13,7 @@ use Novora\EasyAdminBulkEditBundle\BulkEditException;
 use Novora\EasyAdminBulkEditBundle\BulkEditExecutor;
 use Novora\EasyAdminBulkEditBundle\BulkEditField;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'bulk_test_items')]
@@ -61,7 +62,7 @@ final class BulkEditExecutorTest extends TestCase
                 'status' => new BulkEditField('status', static function (Item $item, string $status): void { $item->status = $status; }),
             ], ['status' => 'published'], static fn (Item $item): bool => $item->id !== 2);
             self::fail('Expected authorization failure.');
-        } catch (BulkEditException) {
+        } catch (AccessDeniedException) {
             $manager->clear();
             self::assertSame('draft', $manager->find(Item::class, 1)?->status);
             self::assertSame('draft', $manager->find(Item::class, 2)?->status);

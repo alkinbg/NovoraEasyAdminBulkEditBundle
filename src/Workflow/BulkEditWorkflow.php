@@ -37,7 +37,11 @@ final readonly class BulkEditWorkflow
      */
     public function start(BatchActionDto $batch, string $entityClass, string $confirmUrl): RedirectResponse
     {
-        $ids = $this->selection->fromBatchAction($batch, $entityClass);
+        try {
+            $ids = $this->selection->fromBatchAction($batch, $entityClass);
+        } catch (BulkEditException) {
+            throw new \Symfony\Component\HttpKernel\Exception\BadRequestHttpException('Invalid batch selection.');
+        }
         $token = $this->store->create($entityClass, $ids);
         $separator = str_contains($confirmUrl, '?') ? '&' : '?';
         return new RedirectResponse($confirmUrl.$separator.http_build_query(['bulk_selection' => $token]));

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Novora\EasyAdminBulkEditBundle;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /** Transactional executor. Never uses DQL UPDATE: entity lifecycle callbacks remain active. */
 final readonly class BulkEditExecutor
@@ -52,7 +53,7 @@ final readonly class BulkEditExecutor
                     throw new BulkEditException(sprintf('Entity "%s" with ID "%s" no longer exists.', $entityClass, $id));
                 }
                 if (!$canEdit($entity)) {
-                    throw new BulkEditException('Not authorized to edit one or more selected entities.');
+                    throw new AccessDeniedException('Not authorized to edit one or more selected entities.');
                 }
                 $entities[] = $entity;
             }
