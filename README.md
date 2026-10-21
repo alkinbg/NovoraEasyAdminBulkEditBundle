@@ -49,3 +49,9 @@ MIT license. Copyright (c) 2026 Alkin Fehim.
 The executor clears the Doctrine EntityManager after rolling back a failed transaction. This avoids continued use of dirty managed entities, **but it also detaches unrelated entities managed by that EntityManager**; call it within a dedicated request/operation. It does not automatically retry failed transactions, check concurrent writes, or use row-level locks. For systems requiring concurrency protection, implement application-specific optimistic locking or pessimistic locks and test the chosen database platform.
 
 `BulkEditSelectionStore::inspect()` reads the selection without consuming it. Use this when displaying the form or handling a validation failure. `consume()` is intended for an already validated, CSRF-protected confirmation. The application must handle retry behavior explicitly if persistence fails after consumption. Sessions must be configured and enabled.
+
+## EasyAdmin 5 usage
+
+The `Workflow\\BulkEditWorkflow` service provides batch selection handoff and a confirmation form that uses the bundled Twig template. See [the CRUD integration example](docs/integration.md) for wiring, field configuration and mandatory security checks. `BulkEditFormFactory` builds opt-in fields so omitted field checkboxes do not modify existing values.
+
+**Release policy:** Do not tag `v1.0.0` until a standalone Symfony + EasyAdmin fixture has exercised full controller routing, CSRF, authorization and request flows with PHP 8.4 and 8.5, and the CI matrix has passed.

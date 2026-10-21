@@ -6,6 +6,7 @@ namespace Novora\EasyAdminBulkEditBundle\Workflow;
 
 use EasyCorp\Bundle\EasyAdminBundle\Dto\BatchActionDto;
 use Novora\EasyAdminBulkEditBundle\BulkEditExecutor;
+use Novora\EasyAdminBulkEditBundle\BulkEditException;
 use Novora\EasyAdminBulkEditBundle\BulkEditField;
 use Novora\EasyAdminBulkEditBundle\BulkEditFormFactory;
 use Novora\EasyAdminBulkEditBundle\BulkEditSelectionStore;
@@ -13,6 +14,7 @@ use Novora\EasyAdminBulkEditBundle\BulkSelection;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Form\FormError;
 use Twig\Environment;
 
 /** Request orchestration independent from app-specific CRUD security rules. */
@@ -60,15 +62,26 @@ final readonly class BulkEditWorkflow
         if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/D', $token)) {
             return new Response('Invalid selection token.', Response::HTTP_BAD_REQUEST);
         }
-        $ids = $this->store->inspect($token, $entityClass);
+        try {
+            $ids = $this->store->inspect($token, $entityClass);
+        } catch (BulkEditException) {
+            return new Response('Selection expired or is invalid.', Response::HTTP_BAD_REQUEST);
+        }
         $form = $this->forms->create($definitions);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            $changes = $this->forms->selectedChanges($form, array_keys($definitions));
-            // Token is consumed once; subsequent confirmation POSTs fail closed.
-            $this->store->consume($token, $entityClass);
-            $this->executor->execute($entityClass, $ids, $fields, $changes, $canEdit);
-            return new RedirectResponse($successUrl, Response::HTTP_SEE_OTHER);
+            try {
+                $changes = $this->forms->selectedChanges($form, array_keys($definitions));
+            } catch (BulkEditException $exception) {
+                $form->addError(new FormError($exception->getMessage()));
+                $changes = [];
+            }
+            if ($changes !== []) {
+                // Token is consumed once; subsequent confirmation POSTs fail closed.
+                $this->store->consume($token, $entityClass);
+                $this->executor->execute($entityClass, $ids, $fields, $changes, $canEdit);
+                return new RedirectResponse($successUrl, Response::HTTP_SEE_OTHER);
+            }
         }
 
         return new Response($this->twig->render('@NovoraEasyAdminBulkEdit/bulk_edit.html.twig', [
