@@ -19,3 +19,6 @@ value:
   empty: 'Empty'
 validation:
   no_fields: 'Choose at least one field to update.'
+flash:
+  success_one: 'Successfully updated %count% record.'
+  success_many: 'Successfully updated %count% records.'

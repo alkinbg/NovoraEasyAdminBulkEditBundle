@@ -19,3 +19,6 @@ value:
   empty: 'Празна стойност'
 validation:
   no_fields: 'Изберете поне едно поле за промяна.'
+flash:
+  success_one: 'Успешно обновен %count% запис.'
+  success_many: 'Успешно обновени %count% записа.'
