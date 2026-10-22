@@ -18,6 +18,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\BatchActionDto;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Novora\EasyAdminBulkEditBundle\BulkEditAction;
 use Novora\EasyAdminBulkEditBundle\BulkEditField;
 use Novora\EasyAdminBulkEditBundle\Workflow\BulkEditWorkflow;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -34,8 +35,7 @@ final class ProductCrudController extends AbstractCrudController
     public function configureActions(Actions $actions): Actions
     {
         return $actions->addBatchAction(
-            Action::new('bulkEdit', 'Bulk edit')
-                ->linkToCrudAction('bulkEdit')
+            BulkEditAction::new('bulkEdit', 'Bulk edit')
         );
     }
 
@@ -108,6 +108,6 @@ Entity-level changes may also race with other requests. Apply optimistic version
 
 ## EasyAdmin's initial batch confirmation
 
-EasyAdmin 5 displays its own confirmation modal for batch actions by default, **before** the bundle's review and final confirmation screens. To skip that generic modal, EasyAdmin exposes `$crud->askConfirmationOnBatchActions(false)` in `configureCrud()`. This setting applies to **all** batch actions in that CRUD controller, including potentially destructive ones. Only disable it when every batch action has its own appropriate validation/confirmation step. The bundle deliberately does not alter that setting automatically.
+EasyAdmin 5 displays its own confirmation modal for ordinary batch actions by default, **before** the bundle's review and final confirmation screens. Use `BulkEditAction::new()` to skip this redundant first modal **only for the bulk-edit action**, preserving default confirmations on other actions. To skip that generic modal, EasyAdmin exposes `$crud->askConfirmationOnBatchActions(false)` in `configureCrud()`. This setting applies to **all** batch actions in that CRUD controller, including potentially destructive ones. Only disable it when every batch action has its own appropriate validation/confirmation step. The bundle deliberately does not alter that setting automatically.
 
 The bundle includes English and Bulgarian interface translations under the `NovoraEasyAdminBulkEdit` domain. Field labels come from the application Symfony form options; pass a human-readable `label` for every editable field. Configure the application locale as usual.

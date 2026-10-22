@@ -73,7 +73,7 @@ The bundle deliberately does not guess setters or permit all entity fields. The 
 
 The form and review screens use native EasyAdmin/Bootstrap layout and include English and Bulgarian translations (`NovoraEasyAdminBulkEdit` domain). The application locale determines the language. Use the `label` option in each allowed field definition for a meaningful human-readable field label. The first checkbox chooses whether a property changes; the value control sets the new value, including a valid `false` for boolean fields.
 
-EasyAdmin 5 shows its own generic confirmation modal for batch actions by default. To disable it, EasyAdmin provides `$crud->askConfirmationOnBatchActions(false)` in `configureCrud()`. **This affects every batch action in that CRUD controller**. Only use it if all configured batch actions implement adequate confirmation themselves. This bundle does not disable other actions' confirmations automatically.
+Use `BulkEditAction::new()` in `configureActions()` to skip the first generic confirmation **only for bulk edit**; the bundle provides its own review and final confirmation. EasyAdmin 5 shows its own generic confirmation modal for other batch actions by default. To disable it, EasyAdmin provides `$crud->askConfirmationOnBatchActions(false)` in `configureCrud()`. **This affects every batch action in that CRUD controller**. Only use it if all configured batch actions implement adequate confirmation themselves. This bundle does not disable other actions' confirmations automatically.
 
 ## Scope and safety
 
