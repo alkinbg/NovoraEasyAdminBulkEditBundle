@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 — Action-specific confirmation
+
+- Add `BulkEditAction::new()` to skip the redundant first batch-confirmation modal for bulk editing only.
+- Preserve confirmation for all other CRUD batch actions.
+- Document the focused integration API.
+
 ## 1.1.0 — Improved editing experience and localization
 
 - Improve the editing and review screen layout.
