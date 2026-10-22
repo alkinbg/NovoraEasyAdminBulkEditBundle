@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.2 — Success notifications
 
 - Add localized success flash feedback after a confirmed, successful bulk update.
 - Test success flash contents and ensure failed confirmation does not report success.
