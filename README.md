@@ -14,6 +14,7 @@ Explicit, validated bulk editing for EasyAdmin 5 and Doctrine ORM. Administrator
 - Native EasyAdmin batch-action integration without patching vendor code
 - **Only checked fields change**; server-defined field allowlist and Symfony Form validation
 - Separate review and final confirmation screens; review data remains server-side
+- Localized success flash after a successful update, using the standard Symfony `success` flash type
 - Two separate CSRF checks (EasyAdmin batch action and Symfony confirmation form)
 - Time-limited, session-scoped selection tokens (15 minutes; maximum 100 IDs)
 - Explicit per-entity authorization callback and matching CRUD entity/action checks

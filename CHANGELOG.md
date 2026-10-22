@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add localized success flash feedback after a confirmed, successful bulk update.
+- Test success flash contents and ensure failed confirmation does not report success.
+
 ## 1.1.1 — Action-specific confirmation
 
 - Add `BulkEditAction::new()` to skip the redundant first batch-confirmation modal for bulk editing only.

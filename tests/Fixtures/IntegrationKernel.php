@@ -40,7 +40,7 @@ final class IntegrationKernel extends Kernel
 
     public function getCacheDir(): string
     {
-        return sys_get_temp_dir().'/novora_easyadmin_bundle_ux2_test_cache_'.md5($this->getProjectDir());
+        return sys_get_temp_dir().'/novora_easyadmin_bundle_flash2_test_cache_'.md5($this->getProjectDir());
     }
 
     private function configureRoutes(RoutingConfigurator $routes): void

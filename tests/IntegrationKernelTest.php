@@ -140,11 +140,13 @@ final class IntegrationKernelTest extends TestCase
             IntegrationCrudController::$canAccessAction = true;
             $manager->clear();
             self::assertSame('draft', $manager->find(WorkflowItem::class, 1)?->status);
+            self::assertSame([], $session->getFlashBag()->peek('success'));
 
             $confirm = Request::create($reviewUrl, 'POST', ['bulk_confirm' => ['_token' => $reviewFormToken]]);
             $confirm->setSession($session);
             $finalResponse = $kernel->handle($confirm);
             self::assertSame(303, $finalResponse->getStatusCode());
+            self::assertSame(['Successfully updated 1 record.'], $session->getFlashBag()->peek('success'));
             self::assertStringNotContainsString('bulk_selection=', (string) $finalResponse->headers->get('Location'));
             $manager->clear();
             self::assertSame('published', $manager->find(WorkflowItem::class, 1)?->status);

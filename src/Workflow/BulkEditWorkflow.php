@@ -14,6 +14,7 @@ use Novora\EasyAdminBulkEditBundle\BulkSelection;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\Form\FormError;
 use Twig\Environment;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -91,7 +92,17 @@ final readonly class BulkEditWorkflow
             $confirmation->handleRequest($request);
             if ($confirmation->isSubmitted() && $confirmation->isValid()) {
                 $this->store->consume($token, $entityClass);
-                $this->executor->execute($entityClass, $ids, $fields, $changes, $canEdit);
+                $updated = $this->executor->execute($entityClass, $ids, $fields, $changes, $canEdit);
+                if ($request->hasSession()) {
+                    $flashBag = $request->getSession()->getBag('flashes');
+                    if ($flashBag instanceof FlashBagInterface) {
+                        $flashBag->add(
+                            'success',
+                            $this->translator?->trans($updated === 1 ? 'flash.success_one' : 'flash.success_many', ['%count%' => $updated], 'NovoraEasyAdminBulkEdit')
+                                ?? sprintf('%d %s updated successfully.', $updated, $updated === 1 ? 'record' : 'records'),
+                        );
+                    }
+                }
                 return new RedirectResponse($successUrl, Response::HTTP_SEE_OTHER);
             }
 
